@@ -1,0 +1,65 @@
+package frc.robot.subsystems.spindexer;
+
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkLowLevel;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.SparkUtil;
+
+public class Spindexer extends SubsystemBase {
+
+  private final SparkMax topMotor =
+      new SparkMax(SpindexerConstants.topMotorId, SparkLowLevel.MotorType.kBrushless);
+  private final SparkMax bottomMotor =
+      new SparkMax(SpindexerConstants.bottomMotorId, SparkLowLevel.MotorType.kBrushless);
+
+  private final SparkMaxConfig topMotorConfig = new SparkMaxConfig();
+  private final SparkMaxConfig bottomMotorConfig = new SparkMaxConfig();
+
+  public Spindexer() {
+    topMotorConfig
+        .idleMode(IdleMode.kCoast)
+        .smartCurrentLimit(
+            SpindexerConstants.stallCurrentLimit, SpindexerConstants.freeCurrentLimit)
+        .voltageCompensation(12)
+        .inverted(false);
+
+    SparkUtil.tryUntilOk(
+        topMotor,
+        5,
+        () ->
+            topMotor.configure(
+                topMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+
+    bottomMotorConfig
+        .idleMode(IdleMode.kCoast)
+        .smartCurrentLimit(
+            SpindexerConstants.stallCurrentLimit, SpindexerConstants.freeCurrentLimit)
+        .voltageCompensation(12)
+        .inverted(false)
+        .follow(SpindexerConstants.topMotorId);
+
+    SparkUtil.tryUntilOk(
+        bottomMotor,
+        5,
+        () ->
+            bottomMotor.configure(
+                topMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+  }
+
+  public void index() {
+    topMotor.set(SpindexerConstants.indexSpeed);
+    // TODO Determine if we need bottom motor
+  }
+
+  public void stopIndex() {
+    topMotor.stopMotor();
+    bottomMotor.stopMotor();
+  }
+
+  @Override
+  public void periodic() {}
+}
