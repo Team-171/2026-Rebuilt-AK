@@ -4,18 +4,31 @@
 // Use of this source code is governed by a BSD
 // license that can be found in the LICENSE file
 // at the root directory of this project.
-
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.wpilibj.Filesystem;
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class VisionConstants {
+
+  public static final Path ApriltagPath =
+      Filesystem.getDeployDirectory().toPath().resolve("apriltags/welded/2026-official.json");
   // AprilTag layout
-  public static AprilTagFieldLayout aprilTagLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+  public static AprilTagFieldLayout aprilTagLayout;
+
+  static {
+    try {
+      // Use the constructor for custom external files
+      aprilTagLayout = new AprilTagFieldLayout(ApriltagPath.toString());
+    } catch (IOException e) {
+      // Handle error (e.g., file missing)
+      e.printStackTrace();
+    }
+  }
 
   // Camera names, must match names configured on coprocessor
   public static String camera0Name = "limelight-shooter";

@@ -8,6 +8,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.SparkUtil;
 
@@ -40,7 +41,7 @@ public class Intake extends SubsystemBase {
                 wheelMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     liftMotorConfig
-        .idleMode(IdleMode.kBrake)
+        .idleMode(IdleMode.kCoast) // TODO FIX TO BRAKE MODE MARK: - BRAKE MODE
         .smartCurrentLimit(IntakeConstants.stallCurrentLimit, IntakeConstants.freeCurrentLimit)
         .voltageCompensation(12)
         .inverted(false);
@@ -101,5 +102,9 @@ public class Intake extends SubsystemBase {
   }
 
   @Override
-  public void periodic() {}
+  public void periodic() {
+    SmartDashboard.putNumber("Lift Position", liftMotor.getEncoder().getPosition());
+    SmartDashboard.putNumber("Lift PID Setpoint Position", liftPID.getMAXMotionSetpointPosition());
+    SmartDashboard.putNumber("Lift PID Setpoint", liftPID.getSetpoint());
+  }
 }

@@ -25,6 +25,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.shooter.Aiming;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.vision.Vision;
@@ -53,6 +54,8 @@ public class RobotContainer {
 
   private final Spindexer spindexer = new Spindexer();
 
+  private final Aiming aiming;
+
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
@@ -71,6 +74,7 @@ public class RobotContainer {
                 new ModuleIOSpark(1),
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
+        aiming = new Aiming(drive);
 
         vision =
             new Vision(
@@ -88,6 +92,7 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+        aiming = new Aiming(drive);
         vision =
             new Vision(
                 drive::addVisionMeasurement,
@@ -106,6 +111,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+        aiming = new Aiming(drive);
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
       }
     }
@@ -144,12 +150,12 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftY(),
-            () -> controller.getLeftX(),
-            () -> controller.getRightX()));
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
+            () -> -controller.getRightX()));
 
     // Switch to X pattern when X button is pressed
-    controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Reset gyro to 0° when back button is pressed
     controller
@@ -177,6 +183,16 @@ public class RobotContainer {
         .onFalse(IntakeCommands.stopIntake(intake));
 
     controller.b().onTrue(IntakeCommands.toggleIntake(intake));
+
+    controller
+        .a()
+        .whileTrue(
+            DriveCommands.joystickDrive(
+                drive,
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> aiming.getAngleToHub()))
+        .onFalse(ShooterCommands.stopAiming(aiming));
   }
 
   /**
