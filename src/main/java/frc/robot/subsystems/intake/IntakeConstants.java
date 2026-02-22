@@ -24,5 +24,5 @@ public final class IntakeConstants {
   public static final double forwardLimit = 90; // TODO
   public static final double reverseLimit = 0; // TODO
 
-  public static final double intakeSpeed = 1;
+  public static final double intakeSpeed = 0.50;
 }
