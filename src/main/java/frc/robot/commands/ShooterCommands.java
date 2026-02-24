@@ -11,15 +11,27 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.shooter.Aiming;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.spindexer.Spindexer;
+import java.util.function.DoubleSupplier;
+import org.littletonrobotics.junction.Logger;
 
 public class ShooterCommands {
 
   private ShooterCommands() {}
 
-  public static Command shootCommand(Shooter shooter) {
+  public static Command shootCommand(Shooter shooter, Aiming aiming) {
     return Commands.run(
         () -> {
-          shooter.shoot();
+          shooter.shooterVelocity(aiming.getShooterPower());
+          Logger.recordOutput("shooting", true);
+        },
+        shooter);
+  }
+
+  public static Command shootConstantCommand(Shooter shooter, DoubleSupplier speed) {
+    return Commands.run(
+        () -> {
+          shooter.shoot(speed.getAsDouble());
+          Logger.recordOutput("shooting", true);
         },
         shooter);
   }
@@ -28,6 +40,7 @@ public class ShooterCommands {
     return Commands.run(
         () -> {
           shooter.stopShooter();
+          Logger.recordOutput("shooting", false);
         },
         shooter);
   }

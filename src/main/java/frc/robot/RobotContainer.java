@@ -7,16 +7,19 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.IntakeCommands;
 import frc.robot.commands.ShooterCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -24,7 +27,6 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
-import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Aiming;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.spindexer.Spindexer;
@@ -48,7 +50,7 @@ public class RobotContainer {
 
   private final Vision vision;
 
-  private final Intake intake = new Intake();
+  // private final Intake intake = new Intake();
 
   private final Shooter shooter = new Shooter();
 
@@ -58,6 +60,10 @@ public class RobotContainer {
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
+  public final Joystick joystick = new Joystick(1);
+
+  private final JoystickButton test = new JoystickButton(joystick, 1);
+  private final JoystickButton test2 = new JoystickButton(joystick, 2);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -137,6 +143,8 @@ public class RobotContainer {
 
     // Configure the button bindings
     configureButtonBindings();
+
+    NamedCommands.registerCommands(AutoCommands.generateNamedCommands());
   }
 
   /**
@@ -156,7 +164,6 @@ public class RobotContainer {
 
     // Switch to X pattern when X button is pressed
     // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
     // Reset gyro to 0° when back button is pressed
     controller
         .back()
@@ -171,28 +178,36 @@ public class RobotContainer {
     // Shoot and index while holding right bumper
     controller
         .rightBumper()
-        .whileTrue(ShooterCommands.shootCommand(shooter))
+        // .whileTrue(ShooterCommands.shootConstantCommand(shooter, () -> -joystick.getRawAxis(3)))
+        // .whileTrue(ShooterCommands.shootCommand(shooter, aiming))
         .whileTrue(ShooterCommands.index(spindexer))
-        .onFalse(ShooterCommands.stopShoot(shooter))
+        // .onFalse(ShooterCommands.stopShoot(shooter))
         .onFalse(ShooterCommands.stopIndexer(spindexer));
 
     // Intake while holding left trigger
-    controller
-        .leftTrigger()
-        .whileTrue(IntakeCommands.intakeCommand(intake))
-        .onFalse(IntakeCommands.stopIntake(intake));
+    /* controller
+    .leftTrigger()
+    .whileTrue(IntakeCommands.intakeCommand(intake))
+    .onFalse(IntakeCommands.stopIntake(intake)); */
 
-    controller.b().onTrue(IntakeCommands.toggleIntake(intake));
+    /* controller.b().onTrue(IntakeCommands.toggleIntake(intake)); */
 
     controller
         .a()
         .whileTrue(
-            DriveCommands.joystickDrive(
+            DriveCommands.aimAndDrive(
                 drive,
+                aiming,
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
                 () -> aiming.getAngleToHub()))
-        .onFalse(ShooterCommands.stopAiming(aiming));
+        .whileTrue(ShooterCommands.shootConstantCommand(shooter, () -> -joystick.getRawAxis(3)))
+        .onFalse(ShooterCommands.stopAiming(aiming))
+        .onFalse(ShooterCommands.stopShoot(shooter));
+
+    /* test.whileTrue(ShooterCommands.shootConstantCommand(shooter, () -> -joystick.getRawAxis(3)))
+    .onFalse(ShooterCommands.stopShoot(shooter)); */
+    /* test.whileTrue(intake.intakeManual(-joystick.getRawAxis(1))); */
   }
 
   /**

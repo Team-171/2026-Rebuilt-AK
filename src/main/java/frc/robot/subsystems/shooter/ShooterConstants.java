@@ -4,7 +4,7 @@ public final class ShooterConstants {
 
   public static final int shooterCanId = 33;
 
-  public static final int stallCurrentLimit = 25;
+  public static final int stallCurrentLimit = 40;
   public static final int freeCurrentLimit = 40;
 
   public static final double kP = 0;
@@ -18,11 +18,11 @@ public final class ShooterConstants {
   public static final double maxAcceleration = 190000;
   public static final double allowedError = 1;
 
-  public static final double conversionFactor = (1.0 / 9); // TODO
+  public static final double conversionFactor = (1);
 
-  public static final double shootSpeed = 0.40;
+  public static final double shootSpeed = 0.60;
 
-  public static final double shooterkP = 5;
+  public static final double shooterkP = 0.9;
   public static final double shooterkI = 0;
-  public static final double shooterkD = 0;
+  public static final double shooterkD = 0.01;
 }

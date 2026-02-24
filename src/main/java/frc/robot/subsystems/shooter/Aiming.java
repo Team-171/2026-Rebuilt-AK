@@ -4,6 +4,8 @@
 package frc.robot.subsystems.shooter;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
@@ -15,6 +17,7 @@ import frc.robot.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.PhotonUtils;
 
 public class Aiming extends SubsystemBase {
 
@@ -47,6 +50,8 @@ public class Aiming extends SubsystemBase {
     treeMap.put(3.85, 7.5);
     treeMap.put(4.29, 7.2);
 
+    // treeMap.put(0.25, value);
+
     pidControllerOmega.reset(drive.getRotation().getRadians());
     pidControllerOmega.setTolerance(Units.degreesToRadians(1));
     pidControllerOmega.enableContinuousInput(-Math.PI, Math.PI);
@@ -59,6 +64,8 @@ public class Aiming extends SubsystemBase {
     Logger.recordOutput("angle", getAngleToHub());
 
     Logger.recordOutput("KP", ShooterConstants.shooterkP);
+    Logger.recordOutput("distance to hub", getDisToHub());
+    Logger.recordOutput("shooter power", getShooterPower());
   }
 
   // @AutoLogOutput
@@ -71,25 +78,30 @@ public class Aiming extends SubsystemBase {
     double targetY;
 
     if (alliance.isPresent() && alliance.get() == Alliance.Blue) {
-      targetX = FieldConstants.Hub.innerCenterPoint.getX();
-      targetY = FieldConstants.Hub.innerCenterPoint.getY();
+      targetX = FieldConstants.Hub.topCenterPoint.getX();
+      targetY = FieldConstants.Hub.topCenterPoint.getY();
     } else {
-      targetX = AllianceFlipUtil.applyX(FieldConstants.Hub.innerCenterPoint.getX());
-      targetY = AllianceFlipUtil.applyY(FieldConstants.Hub.innerCenterPoint.getY());
+      targetX = AllianceFlipUtil.applyX(FieldConstants.Hub.topCenterPoint.getX());
+      targetY = AllianceFlipUtil.applyY(FieldConstants.Hub.topCenterPoint.getY());
     }
 
     double calcX = targetX - currentX;
     double calcY = targetY - currentY;
 
     double result =
-        pidControllerOmega.calculate(
-            drive.getRotation().getRadians(), Math.atan2(calcY, calcX) + Math.PI);
+        pidControllerOmega.calculate(drive.getRotation().getRadians(), Math.atan2(calcY, calcX));
 
     return result;
   }
 
-  public void resetPID() {
-    pidControllerOmega.reset(drive.getRotation().getRadians());
+  public double getDisToHub() {
+    Pose2d hubPose =
+        new Pose2d(FieldConstants.Hub.topCenterPoint.toTranslation2d(), new Rotation2d());
+    return PhotonUtils.getDistanceToPose(drive.getPose(), AllianceFlipUtil.apply(hubPose));
+  }
+
+  public Command resetPID() {
+    return runOnce(() -> this.pidControllerOmega.reset(drive.getRotation().getRadians()));
   }
 
   public Command stopCommand() {
@@ -97,4 +109,8 @@ public class Aiming extends SubsystemBase {
   }
 
   private void stop() {}
+
+  public double getShooterPower() {
+    return treeMap.get(this.getDisToHub());
+  }
 }

@@ -22,7 +22,7 @@ public class Spindexer extends SubsystemBase {
         .smartCurrentLimit(
             SpindexerConstants.stallCurrentLimit, SpindexerConstants.freeCurrentLimit)
         .voltageCompensation(12)
-        .inverted(false);
+        .inverted(true);
 
     SparkUtil.tryUntilOk(
         motor,

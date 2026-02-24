@@ -9,6 +9,8 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.SparkUtil;
 
@@ -41,7 +43,7 @@ public class Intake extends SubsystemBase {
                 wheelMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     liftMotorConfig
-        .idleMode(IdleMode.kCoast) // TODO FIX TO BRAKE MODE MARK: - BRAKE MODE
+        .idleMode(IdleMode.kCoast)
         .smartCurrentLimit(IntakeConstants.stallCurrentLimit, IntakeConstants.freeCurrentLimit)
         .voltageCompensation(12)
         .inverted(false);
@@ -62,9 +64,9 @@ public class Intake extends SubsystemBase {
     liftMotorConfig
         .softLimit
         .forwardSoftLimit(IntakeConstants.forwardLimit)
-        .forwardSoftLimitEnabled(true)
+        .forwardSoftLimitEnabled(true) // MARK: TRUE
         .reverseSoftLimit(IntakeConstants.reverseLimit)
-        .reverseSoftLimitEnabled(true);
+        .reverseSoftLimitEnabled(true); // MARK: TRUE
 
     SparkUtil.tryUntilOk(
         liftMotor,
@@ -76,11 +78,14 @@ public class Intake extends SubsystemBase {
 
   public void toggleIntake() {
     if (isIntakeDeployed) {
-      liftPID.setSetpoint(0, ControlType.kMAXMotionPositionControl); // TODO Figure out setpoints
+      // liftPID.setSetpoint(0, ControlType.kMAXMotionPositionControl); // TODO Figure out setpoints
+      IntakeConstants.intakeSetpoint = 0;
       isIntakeDeployed = false;
     } else {
-      liftPID.setSetpoint(90, ControlType.kMAXMotionPositionControl); // TODO Figure out setpoints
+      // liftPID.setSetpoint(1.8, ControlType.kMAXMotionPositionControl); // TODO Figure out
+      // setpoints
       isIntakeDeployed = true;
+      IntakeConstants.intakeSetpoint = 1.8;
     }
   }
 
@@ -101,10 +106,16 @@ public class Intake extends SubsystemBase {
     liftMotor.stopMotor();
   }
 
+  public Command intakeManual(double power) {
+    return Commands.run(() -> liftMotor.set(power));
+  }
+
   @Override
   public void periodic() {
     SmartDashboard.putNumber("Lift Position", liftMotor.getEncoder().getPosition());
-    SmartDashboard.putNumber("Lift PID Setpoint Position", liftPID.getMAXMotionSetpointPosition());
-    SmartDashboard.putNumber("Lift PID Setpoint", liftPID.getSetpoint());
+    // SmartDashboard.putNumber("Lift PID Setpoint Position",
+    // liftPID.getMAXMotionSetpointPosition());
+    // SmartDashboard.putNumber("Lift PID Setpoint", liftPID.getSetpoint());
+    liftPID.setSetpoint(IntakeConstants.intakeSetpoint, ControlType.kMAXMotionPositionControl);
   }
 }
