@@ -4,7 +4,6 @@
 // Use of this source code is governed by a BSD
 // license that can be found in the LICENSE file
 // at the root directory of this project.
-
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
@@ -30,9 +29,9 @@ import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 
 public class DriveCommands {
+
   private static final double DEADBAND = 0.1;
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;
@@ -42,6 +41,8 @@ public class DriveCommands {
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
+
+  private static double joystickRotation;
 
   private DriveCommands() {}
 
@@ -145,7 +146,8 @@ public class DriveCommands {
       Drive drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      Supplier<Rotation2d> rotationSupplier) {
+      DoubleSupplier rightXSupplier,
+      DoubleSupplier rightYSupplier) {
 
     // Create PID controller
     ProfiledPIDController angleController =
@@ -159,14 +161,20 @@ public class DriveCommands {
     // Construct command
     return Commands.run(
             () -> {
+              double rightX = MathUtil.applyDeadband(rightXSupplier.getAsDouble(), DEADBAND);
+              double rightY = MathUtil.applyDeadband(rightYSupplier.getAsDouble(), DEADBAND);
+
+              if (!(rightY == 0 && rightX == 0)) {
+                joystickRotation = Math.atan2(rightY, rightX);
+              }
+
               // Get linear velocity
               Translation2d linearVelocity =
                   getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
 
               // Calculate angular speed
               double omega =
-                  angleController.calculate(
-                      drive.getRotation().getRadians(), rotationSupplier.get().getRadians());
+                  angleController.calculate(drive.getRotation().getRadians(), joystickRotation);
 
               // Convert to field relative speeds & send command
               ChassisSpeeds speeds =
@@ -185,9 +193,9 @@ public class DriveCommands {
                           : drive.getRotation()));
             },
             drive)
-
         // Reset PID controller when command starts
-        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()))
+        .beforeStarting(() -> joystickRotation = drive.getRotation().getRadians());
   }
 
   /**
@@ -207,7 +215,6 @@ public class DriveCommands {
               velocitySamples.clear();
               voltageSamples.clear();
             }),
-
         // Allow modules to orient
         Commands.run(
                 () -> {
@@ -215,10 +222,8 @@ public class DriveCommands {
                 },
                 drive)
             .withTimeout(FF_START_DELAY),
-
         // Start timer
         Commands.runOnce(timer::restart),
-
         // Accelerate and gather data
         Commands.run(
                 () -> {
@@ -228,7 +233,6 @@ public class DriveCommands {
                   voltageSamples.add(voltage);
                 },
                 drive)
-
             // When cancelled, calculate and print results
             .finallyDo(
                 () -> {
@@ -266,7 +270,6 @@ public class DriveCommands {
                 () -> {
                   limiter.reset(0.0);
                 }),
-
             // Turn in place, accelerating up to full speed
             Commands.run(
                 () -> {
@@ -274,12 +277,10 @@ public class DriveCommands {
                   drive.runVelocity(new ChassisSpeeds(0.0, 0.0, speed));
                 },
                 drive)),
-
         // Measurement sequence
         Commands.sequence(
             // Wait for modules to fully orient before starting measurement
             Commands.waitSeconds(1.0),
-
             // Record starting measurement
             Commands.runOnce(
                 () -> {
@@ -287,7 +288,6 @@ public class DriveCommands {
                   state.lastAngle = drive.getRotation();
                   state.gyroDelta = 0.0;
                 }),
-
             // Update gyro delta
             Commands.run(
                     () -> {
@@ -295,7 +295,6 @@ public class DriveCommands {
                       state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
                       state.lastAngle = rotation;
                     })
-
                 // When cancelled, calculate and print results
                 .finallyDo(
                     () -> {
@@ -324,6 +323,7 @@ public class DriveCommands {
   }
 
   private static class WheelRadiusCharacterizationState {
+
     double[] positions = new double[4];
     Rotation2d lastAngle = Rotation2d.kZero;
     double gyroDelta = 0.0;

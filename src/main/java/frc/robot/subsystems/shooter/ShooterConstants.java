@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 public final class ShooterConstants {
 
   public static final int shooterCanId = 33;
+  public static final int talonId = 33;
 
   public static final int stallCurrentLimit = 40;
   public static final int freeCurrentLimit = 40;
@@ -25,4 +26,8 @@ public final class ShooterConstants {
   public static final double shooterkP = 0.9;
   public static final double shooterkI = 0;
   public static final double shooterkD = 0.01;
+
+  public static final double mmCV = 1;
+  public static final double mmA = 1;
+  public static final double mmJ = 1;
 }
