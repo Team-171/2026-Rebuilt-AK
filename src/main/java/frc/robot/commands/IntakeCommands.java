@@ -9,6 +9,8 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.leds.Leds;
+import frc.robot.subsystems.leds.Leds.CURRENTCOLOR;
 
 public class IntakeCommands {
 
@@ -16,25 +18,24 @@ public class IntakeCommands {
 
   public static Command intakeCommand(Intake intake) {
     return Commands.run(
-        () -> {
-          intake.intake();
-        },
-        intake);
+            () -> {
+              intake.intake();
+            },
+            intake)
+        .beforeStarting(() -> Leds.color = CURRENTCOLOR.BLUE);
   }
 
   public static Command stopIntake(Intake intake) {
     return Commands.run(
-        () -> {
-          intake.stopIntake();
-        },
-        intake);
+            () -> {
+              intake.stopIntake();
+            },
+            intake)
+        .finallyDo(() -> Leds.color = CURRENTCOLOR.TEAM_COLOR);
   }
 
   public static Command toggleIntake(Intake intake) {
-    return Commands.run(
-        () -> {
-          intake.toggleIntake();
-        },
-        intake);
+    return Commands.either(
+        intake.intakeRetract(), intake.intakeDeploy(), () -> intake.isIntakeDeployed());
   }
 }

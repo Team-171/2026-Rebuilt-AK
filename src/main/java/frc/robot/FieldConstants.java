@@ -4,7 +4,6 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file at
 // the root directory of this project.
-
 package frc.robot;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +18,14 @@ import java.nio.file.Path;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/* ADAMS NOTES
+ * -----------
+ *
+ * Hub Middle: (4.62, 4.035)
+ * 1.114
+ * -3.464
+ */
+
 /**
  * Contains information for location of field element and other useful reference points.
  *
@@ -26,6 +33,7 @@ import lombok.RequiredArgsConstructor;
  * perspective of the blue alliance station
  */
 public class FieldConstants {
+
   public static final FieldType fieldType = FieldType.ANDYMARK;
 
   // AprilTag related constants
@@ -44,6 +52,7 @@ public class FieldConstants {
    * Officially defined and relevant vertical lines found on the field (defined by X-axis offset)
    */
   public static class LinesVertical {
+
     public static final double center = fieldLength / 2.0;
     public static final double starting =
         AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().getX();
@@ -168,6 +177,7 @@ public class FieldConstants {
   /** Right Bump related constants */
   public static class RightBump {
     // Dimensions
+
     public static final double width = Units.inchesToMeters(73.0);
     public static final double height = Units.inchesToMeters(6.513);
     public static final double depth = Units.inchesToMeters(44.4);
@@ -192,6 +202,7 @@ public class FieldConstants {
   /** Left Trench related constants */
   public static class LeftTrench {
     // Dimensions
+
     public static final double width = Units.inchesToMeters(65.65);
     public static final double depth = Units.inchesToMeters(47.0);
     public static final double height = Units.inchesToMeters(40.25);
@@ -236,6 +247,7 @@ public class FieldConstants {
   /** Tower related constants */
   public static class Tower {
     // Dimensions
+
     public static final double width = Units.inchesToMeters(49.25);
     public static final double depth = Units.inchesToMeters(45.0);
     public static final double height = Units.inchesToMeters(78.25);
@@ -287,6 +299,7 @@ public class FieldConstants {
 
   public static class Depot {
     // Dimensions
+
     public static final double width = Units.inchesToMeters(42.0);
     public static final double depth = Units.inchesToMeters(27.0);
     public static final double height = Units.inchesToMeters(1.125);
@@ -303,6 +316,7 @@ public class FieldConstants {
 
   public static class Outpost {
     // Dimensions
+
     public static final double width = Units.inchesToMeters(31.8);
     public static final double openingDistanceFromFloor = Units.inchesToMeters(28.1);
     public static final double height = Units.inchesToMeters(7.0);

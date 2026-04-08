@@ -15,7 +15,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
 public class DriveConstants {
-  public static final double maxSpeedMetersPerSec = 5.74;
+  public static final double maxSpeedMetersPerSec = (5.74 * 0.95);
   public static final double odometryFrequency = 100.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(22.5);
   public static final double wheelBase = Units.inchesToMeters(25.5);
@@ -32,7 +32,7 @@ public class DriveConstants {
   public static final Rotation2d frontLeftZeroRotation = new Rotation2d(1.479);
   public static final Rotation2d frontRightZeroRotation = new Rotation2d(3.098);
   public static final Rotation2d backLeftZeroRotation = new Rotation2d(3.067);
-  public static final Rotation2d backRightZeroRotation = new Rotation2d(1.504);
+  public static final Rotation2d backRightZeroRotation = new Rotation2d(2.404);
 
   // Device CAN IDs
   public static final int pigeonCanId = 9;

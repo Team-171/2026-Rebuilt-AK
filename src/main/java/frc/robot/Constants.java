@@ -18,6 +18,8 @@ public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
+  public static final double delaySeconds = 0.75;
+
   public static final boolean disableHAL = false;
 
   public static enum Mode {

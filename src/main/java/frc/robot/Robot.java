@@ -26,7 +26,7 @@ import org.littletonrobotics.urcl.URCL;
  */
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
-  private RobotContainer robotContainer;
+  private final RobotContainer robotContainer;
 
   public Robot() {
     // Record metadata
@@ -45,24 +45,22 @@ public class Robot extends LoggedRobot {
 
     // Set up data receivers & replay source
     switch (Constants.currentMode) {
-      case REAL:
+      case REAL -> {
         // Running on a real robot, log to a USB stick ("/U/logs")
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
-        break;
+      }
 
-      case SIM:
-        // Running a physics simulator, log to NT
-        Logger.addDataReceiver(new NT4Publisher());
-        break;
+      case SIM -> // Running a physics simulator, log to NT
+      Logger.addDataReceiver(new NT4Publisher());
 
-      case REPLAY:
+      case REPLAY -> {
         // Replaying a log, set up replay source
         setUseTiming(false); // Run as fast as possible
         String logPath = LogFileUtil.findReplayLog();
         Logger.setReplaySource(new WPILOGReader(logPath));
         Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
-        break;
+      }
     }
 
     // Initialize URCL
@@ -128,6 +126,8 @@ public class Robot extends LoggedRobot {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
+
+    robotContainer.teleopInit();
   }
 
   /** This function is called periodically during operator control. */

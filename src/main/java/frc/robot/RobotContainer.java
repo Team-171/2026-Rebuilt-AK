@@ -6,11 +6,8 @@
 // at the root directory of this project.
 package frc.robot;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -22,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.IntakeCommands;
 import frc.robot.commands.ShooterCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -29,15 +27,18 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.shooter.Aiming;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -50,15 +51,20 @@ public class RobotContainer {
 
   private final Drive drive;
 
+  @SuppressWarnings("unused")
   private final Vision vision;
 
   private final Intake intake = new Intake();
 
   private final Shooter shooter;
 
-  private final Spindexer spindexer = new Spindexer();
+  private final Indexer indexer = new Indexer();
 
   private final Aiming aiming;
+
+  private final Hopper hopper = new Hopper();
+
+  private final Leds leds = new Leds();
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -127,8 +133,24 @@ public class RobotContainer {
       }
     }
 
+    NamedCommands.registerCommand(
+        "shoot", AutoCommands.shootCommand(shooter, aiming, indexer, hopper));
+    NamedCommands.registerCommand("warmup", AutoCommands.warmUpShooter(shooter, aiming));
+    NamedCommands.registerCommand("toggleIntake", AutoCommands.toggleIntake(intake));
+    NamedCommands.registerCommand("intake", AutoCommands.intake(intake));
+    NamedCommands.registerCommand(
+        "shootWithAim",
+        AutoCommands.aimAndShootAuto(shooter, aiming, indexer, hopper, drive, intake));
+    NamedCommands.registerCommand("deployIntake", AutoCommands.deployIntakeAuto(intake));
+    NamedCommands.registerCommand("stopIndex", AutoCommands.stopIndexer(indexer, hopper));
+
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+    autoChooser.addDefaultOption(
+        "Shoot (No Pathplanner)", AutoCommands.shootCommand(shooter, aiming, indexer, hopper));
+    autoChooser.addOption(
+        "aim and shoot",
+        AutoCommands.aimAndShootAuto(shooter, aiming, indexer, hopper, drive, intake));
 
     // Set up SysId routines
     autoChooser.addOption(
@@ -149,8 +171,9 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings();
 
-    NamedCommands.registerCommands(
-        AutoCommands.generateNamedCommands(shooter, aiming, intake, spindexer, drive));
+    // NamedCommands.registerCommands(
+    //    AutoCommands.generateNamedCommands(shooter, aiming, intake, indexer, drive, hopper));
+
   }
 
   /**
@@ -162,22 +185,19 @@ public class RobotContainer {
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
-    DriveCommands.joystickDrive(
-        drive,
-        () -> -controller.getLeftY(),
-        () -> -controller.getLeftX(),
-        () -> -controller.getRightX())); 
-
-    /* drive.setDefaultCommand(
-        DriveCommands.joystickDriveAtAngle(
+        DriveCommands.joystickDrive(
             drive,
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> -controller.getRightY(),
-            () -> -controller.getRightX())); */
+            () -> -controller.getRightX()));
 
-    // Switch to X pattern when X button is pressed
-    // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    /* drive.setDefaultCommand(
+    DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -controller.getLeftY(),
+        () -> -controller.getLeftX(),
+        () -> -controller.getRightY(),
+        () -> -controller.getRightX())); */
     // Reset gyro to 0° when back button is pressed
     controller
         .back()
@@ -189,24 +209,15 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    // Shoot and index while holding right bumper
-    controller
-        .rightBumper()
-        // .whileTrue(ShooterCommands.shootConstantCommand(shooter, () -> -joystick.getRawAxis(3)))
-        // .whileTrue(ShooterCommands.shootCommand(shooter, aiming))
-        .whileTrue(ShooterCommands.index(spindexer))
-        // .onFalse(ShooterCommands.stopShoot(shooter))
-        .onFalse(ShooterCommands.stopIndexer(spindexer));
+    controller.povUp().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    // Intake while holding left trigger
-    /* controller
-    .leftTrigger()
-    .whileTrue(IntakeCommands.intakeCommand(intake))
-    .onFalse(IntakeCommands.stopIntake(intake)); */
+    // Intake on left trigger
+    controller.leftTrigger().whileTrue(IntakeCommands.intakeCommand(intake));
+    // .onFalse(IntakeCommands.stopIntake(intake));
 
-    /* controller.b().onTrue(IntakeCommands.toggleIntake(intake)); */
+    // Aim and rev shooter on right trigger
     controller
-        .a()
+        .rightTrigger()
         .whileTrue(
             DriveCommands.aimAndDrive(
                 drive,
@@ -214,13 +225,58 @@ public class RobotContainer {
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
                 () -> aiming.getAngleToHub()))
-        .whileTrue(ShooterCommands.shootConstantCommand(shooter, () -> -joystick.getRawAxis(3)))
+        .whileTrue(shooter.shootWithDistanceCommand())
+        .onFalse(shooter.stopShooterCommand());
+
+    /* controller
+    .rightTrigger()
+    .whileTrue(
+        DriveCommands.aimAndDrive(
+            drive,
+            aiming,
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
+            () -> aiming.getAngleToHub()))
+    .whileTrue(ShooterCommands.shootCommand(shooter, aiming))
+    .whileTrue(indexer.shootWithdelay())
+    .whileTrue(hopper.shootWithDelay())
+    .onFalse(ShooterCommands.stopHopper(hopper))
+    .onFalse(ShooterCommands.stopIndexer(indexer))
+    .onFalse(ShooterCommands.stopAiming(aiming))
+    .onFalse(ShooterCommands.stopShoot(shooter)); */
+
+    controller
+        .a()
+        .whileTrue(ShooterCommands.runHopper(hopper))
+        .whileTrue(ShooterCommands.index(indexer))
+        .onFalse(ShooterCommands.stopHopper(hopper))
+        .onFalse(ShooterCommands.stopIndexer(indexer))
         .onFalse(ShooterCommands.stopAiming(aiming))
         .onFalse(ShooterCommands.stopShoot(shooter));
 
-    /* test.whileTrue(ShooterCommands.shootConstantCommand(shooter, () -> -joystick.getRawAxis(3)))
-    .onFalse(ShooterCommands.stopShoot(shooter)); */
-    /* test.whileTrue(intake.intakeManual(-joystick.getRawAxis(1))); */
+    controller
+        .y()
+        .whileTrue(hopper.reverseHopperCommand())
+        .whileTrue(indexer.reverseIndexerCommand())
+        .whileTrue(intake.reverseIntakeCommand())
+        .onFalse(hopper.stopHopperCommand())
+        .onFalse(indexer.stopIndexCommand())
+        .onFalse(intake.stopIntakeWheelsCommand());
+
+    controller.x().whileTrue(intake.intakeDeploy());
+    controller.b().whileTrue(intake.intakeRetract());
+    // controller.b().onTrue(intake.toggleIntake());
+
+    /* controller
+    .leftBumper()
+    .onTrue(IntakeCommands.toggleIntake(intake)); */
+
+    // passing
+
+    controller
+        .rightBumper()
+        .whileTrue(shooter.shooterVelocity(50))
+        .onFalse(shooter.stopShooterCommand());
   }
 
   /**
@@ -230,5 +286,12 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.get();
+  }
+
+  public void teleopInit() {
+    intake.stopAllIntakeMotors();
+    hopper.stopHopper();
+    shooter.stopShooter();
+    indexer.stopIndex();
   }
 }

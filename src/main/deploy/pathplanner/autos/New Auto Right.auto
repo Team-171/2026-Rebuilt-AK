@@ -30,7 +30,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Shoot from Afar Left"
+                  "pathName": "Shoot from Afar Right"
                 }
               }
             ]
@@ -68,7 +68,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Pick Up Balls Top"
+                  "pathName": "Pick Up Balls Bottom"
                 }
               },
               {
