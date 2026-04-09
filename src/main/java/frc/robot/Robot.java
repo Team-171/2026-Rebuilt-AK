@@ -27,6 +27,7 @@ import org.littletonrobotics.urcl.URCL;
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private final RobotContainer robotContainer;
+  private final DashboardManager dashboardManager;
 
   public Robot() {
     // Record metadata
@@ -73,6 +74,7 @@ public class Robot extends LoggedRobot {
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our autonomous chooser on the dashboard.
     robotContainer = new RobotContainer();
+    dashboardManager = new DashboardManager(robotContainer);
   }
 
   /** This function is called periodically during all modes. */

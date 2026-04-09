@@ -294,4 +294,8 @@ public class RobotContainer {
     shooter.stopShooter();
     indexer.stopIndex();
   }
+
+  public Drive getDrive() {
+    return drive;
+  }
 }
